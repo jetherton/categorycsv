@@ -185,16 +185,16 @@ class Reports_Controller extends Admin_Controller
 
 
                 // Column Titles
-                $report_csv = "#,INCIDENT TITLE,INCIDENT DATE";
+                echo "#,INCIDENT TITLE,INCIDENT DATE";
                 foreach($post->data_include as $item)
                 {
                 	
                     if ($item == 1) {
-                        $report_csv .= ",LOCATION";
+                        echo ",LOCATION";
                     }
                     
                     if ($item == 2) {
-                        $report_csv .= ",DESCRIPTION";
+                        echo ",DESCRIPTION";
                     }
                     
                     if ($item == 3) {
@@ -202,106 +202,107 @@ class Reports_Controller extends Admin_Controller
                         $cats = ORM::factory('category')->where('category_visible','1')->find_all();
                         foreach($cats as $cat)
                         {
-                        	$report_csv .= ',"'.$this->_csv_text($cat->category_title).'"';
+                        	echo ',"'.$this->_csv_text($cat->category_title).'"';
                         	
                         	$cat_array[$cat->id] = $cat->category_title;
                         }
                     }
                     
                     if ($item == 4) {
-                        $report_csv .= ",LATITUDE";
+                        echo ",LATITUDE";
                     }
                     
                     if($item == 5) {
-                        $report_csv .= ",LONGITUDE";
+                        echo ",LONGITUDE";
                     }		   
                 }
-                $report_csv .= ",APPROVED,VERIFIED";
-                $report_csv .= "\n";
+                echo ",APPROVED,VERIFIED";
+                echo "\n";
                 
 
                 foreach ($incidents as $incident)
                 {
-                    $report_csv .= '"'.$incident->id.'",';
-                    $report_csv .= '"'.$this->_csv_text($incident->incident_title).'",';
-                    $report_csv .= '"'.$incident->incident_date.'"';
+                    echo '"'.$incident->id.'",';
+                    echo '"'.$this->_csv_text($incident->incident_title).'",';
+                    echo '"'.$incident->incident_date.'"';
 
                     foreach($post->data_include as $item)
                     {
                         switch ($item)
                         {
                             case 1:
-                                $report_csv .= ',"'.$this->_csv_text($incident->location->location_name).'"';
+                                echo ',"'.$this->_csv_text($incident->location->location_name).'"';
                             break;
 
                             case 2:
 								if($strip_html)
 								{
-									$report_csv .= ',"'.$this->_csv_text(strip_tags($incident->incident_description)).'"';
+									echo ',"'.$this->_csv_text(strip_tags($incident->incident_description)).'"';
 								}
 								else
 								{
-									$report_csv .= ',"'.$this->_csv_text($incident->incident_description).'"';
+									echo ',"'.$this->_csv_text($incident->incident_description).'"';
 								}
                             break;
 
                             case 3:
 								//first do the site wide categories
+								$temp_cat_array = array();
+								
+								//put the incident cats in a temp array so we don't keep hitting the DB
+								foreach($incident->incident_category as $category)
+								{
+									$temp_cat_array[] = $category->category->id;
+								}
+								
+								
                                 foreach($cat_array as $cat_id=>$cat_title)
                                 {
-                                	$found = false;
-                                	foreach($incident->incident_category as $category)
+                                	if(in_array($cat_id, $temp_cat_array))
                                 	{
-                                		if($category->category->id == $cat_id)
-                                		{
-                                			$found = true;
-                                			break;
-                                		}
-                                	}
-                                	
-                                	if($found)
-                                	{
-                                		//$report_csv .= ',"'.$this->_csv_text($cat_title).'"';
-                                		$report_csv .= ',"'.Kohana::lang('categorycsv.yes').'"';
+                                		//echo ',"'.$this->_csv_text($cat_title).'"';
+                                		echo ',"'.Kohana::lang('categorycsv.yes').'"';
                                 	}
                                 	else
                                 	{
-                                		$report_csv .= ',""';
+                                		echo ',""';
                                 	}
+                                	
                                 }
                                                                 
 				
                             break;
                         
                             case 4:
-                                $report_csv .= ',"'.$this->_csv_text($incident->location->latitude).'"';
+                                echo ',"'.$this->_csv_text($incident->location->latitude).'"';
                             break;
                         
                             case 5:
-                                $report_csv .= ',"'.$this->_csv_text($incident->location->longitude).'"';
+                                echo ',"'.$this->_csv_text($incident->location->longitude).'"';
                             break;
                         }
                     }
                     
                     if ($incident->incident_active)
                     {
-                        $report_csv .= ",YES";
+                        echo ",YES";
                     }
                     else
                     {
-                        $report_csv .= ",NO";
+                        echo ",NO";
                     }
                     
                     if ($incident->incident_verified)
                     {
-                        $report_csv .= ",YES";
+                        echo ",YES";
                     }
                     else
                     {
-                        $report_csv .= ",NO";
+                        echo ",NO";
                     }
                     
-                    $report_csv .= "\n";
+                    echo "\n";
+                    unset($incident);
                 }
                 
 
@@ -310,8 +311,8 @@ class Reports_Controller extends Admin_Controller
                 header("Content-type: text/x-csv");
                 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
                 header("Content-Disposition: attachment; filename=" . time() . ".csv");
-                header("Content-Length: " . strlen($report_csv));
-                echo $report_csv;
+                //header("Content-Length: " . strlen($report_csv));
+                //echo $report_csv;
                 exit;
 
             }
